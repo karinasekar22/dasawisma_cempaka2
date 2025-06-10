@@ -36,6 +36,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+   _deleteData(kkId) async {
+    try {
+      await KartuKeluargaService.deleteKK(kkId);
+      fetchData();
+    } catch (e) {
+      print('Cannot Delete: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Gagal menghapus data: $e')),
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -215,7 +227,30 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 color: Colors.red,
                                               ),
                                               onPressed: () {
-                                                // Aksi hapus
+                                                showDialog(
+                                                  context: context, 
+                                                  builder: (BuildContext context){
+                                                    return AlertDialog(
+                                                      title: const Text("Konfirmasi"),
+                                                      content: const Text("Apakah anda yakin ingin menghapus data ini?"),
+                                                      actions: <Widget>[
+                                                        TextButton(
+                                                          child : const Text("Batal"),
+                                                          onPressed: (){
+                                                            Navigator.of(context).pop();
+                                                          },
+                                                          ),
+                                                          TextButton(
+                                                            child: const Text("Hapus"),
+                                                            onPressed: (){
+                                                              _deleteData(kk.id);
+                                                              Navigator.of(context).pop();
+                                                            },
+                                                          )
+                                                      ],
+                                                    );
+
+                                                  }     );            
                                               },
                                             ),
                                           ],
