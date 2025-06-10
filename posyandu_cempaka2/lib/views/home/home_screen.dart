@@ -196,10 +196,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                             IconButton(
                                               icon: const Icon(
                                                 Icons.edit,
-                                                color: Colors.blue,
+                                                color: Colors.green,
                                               ),
                                               onPressed: () {
-                                                // Aksi edit
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (context) => AddKKForm(existingKK: kk),
+                                                  ),
+                                                ).then((value) {
+                                                  fetchData();
+                                                });
                                               },
                                             ),
                                             IconButton(
@@ -274,14 +281,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => AddKKForm()),
-                      ).then((value){
+                      ).then((value) {
                         fetchData();
                       });
                     },
                   ),
-                  const SizedBox(
-                    width: 12,
-                  ),
+                  const SizedBox(width: 12),
                 ]
                 : null,
       ),
@@ -290,9 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view), 
-            label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.pregnant_woman),
             label: 'Bumil',
