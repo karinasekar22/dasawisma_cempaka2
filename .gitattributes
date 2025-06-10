@@ -1,0 +1,19 @@
+# Abaikan folder build bawaan Flutter (android/ios/macos/web/linux)
+android/** linguist-vendored
+ios/** linguist-vendored
+macos/** linguist-vendored
+web/** linguist-vendored
+linux/** linguist-vendored
+windows/** linguist-vendored
+
+# Abaikan konfigurasi dan tools Flutter internal
+**/*.cmake linguist-generated
+**/*.gradle linguist-generated
+**/*.pbxproj linguist-generated
+**/*.xcscheme linguist-generated
+**/*.xcworkspacedata linguist-generated
+**/*.xcsettings linguist-generated
+
+# Abaikan folder dependensi
+node_modules/** linguist-vendored
+.dart_tool/** linguist-vendored
