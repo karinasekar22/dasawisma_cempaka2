@@ -8,7 +8,7 @@ class AddAnggotaForm extends StatefulWidget {
   final String kkId;
   final int jumlah;
 
-  const AddAnggotaForm({required this.kkId, required this.jumlah, Key? key}) : super(key: key);
+  const AddAnggotaForm({required this.kkId, required this.jumlah, super.key});
 
   @override
   _AddAnggotaFormState createState() => _AddAnggotaFormState();
@@ -31,6 +31,8 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
         'tanggal_lahir': TextEditingController(),
         'jenis_kelamin': null,
         'status_dalam_keluarga': null,
+        'hamil': null,
+        'hpht': TextEditingController(),
       };
     });
   }
@@ -41,23 +43,43 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
       ctrl['nama']?.dispose();
       ctrl['nik']?.dispose();
       ctrl['tanggal_lahir']?.dispose();
+      ctrl['hpht']?.dispose();
     }
     super.dispose();
   }
 
+  //Untuk Datepicker Tanggal Lahir
   Future<void> _selectTanggal(int index) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime(2015),
+      initialDate: DateTime(2025),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
     if (picked != null) {
-      anggotaControllers[index]['tanggal_lahir']!.text = DateFormat('yyyy-MM-dd').format(picked);
+      anggotaControllers[index]['tanggal_lahir']!.text = DateFormat(
+        'yyyy-MM-dd',
+      ).format(picked);
+    }
+  }
+
+  //untuk Datepicker HPHT
+  Future<void> _selectHPHT(int index) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2025),
+      firstDate: DateTime(1950),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      anggotaControllers[index]['hpht']!.text = DateFormat(
+        'yyyy-MM-dd',
+      ).format(picked);
     }
   }
 
   void _nextOrSubmit() {
+     print('Validasi form dijalankan. currentIndex: $currentIndex');
     if (_formKey.currentState!.validate()) {
       if (currentIndex < widget.jumlah - 1) {
         setState(() {
@@ -72,26 +94,35 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
   }
 
   Future<void> _submitAllData() async {
-    final data = anggotaControllers.map((ctrl) {
-      return {
-        'kk_id': widget.kkId,
-        'nama': ctrl['nama']!.text,
-        'nik': ctrl['nik']!.text,
-        'tanggal_lahir': ctrl['tanggal_lahir']!.text,
-        'jenis_kelamin': ctrl['jenis_kelamin'],
-        'status_dalam_keluarga': ctrl['status_dalam_keluarga'],
-      };
-    }).toList();
+    final data =
+        anggotaControllers.map((ctrl) {
+          return {
+            'kk_id': widget.kkId,
+            'nama': ctrl['nama']!.text,
+            'nik': ctrl['nik']!.text,
+            'tanggal_lahir': ctrl['tanggal_lahir']!.text,
+            'jenis_kelamin': ctrl['jenis_kelamin'],
+            'status_dalam_keluarga': ctrl['status_dalam_keluarga'],
+            'hamil': ctrl['hamil'] == 'Ya' ? true : false,
+            'hpht':
+                ctrl['hpht'] != null && ctrl['hpht']!.text.isNotEmpty
+                    ? DateTime.tryParse(ctrl['hpht']!.text)?.toIso8601String()
+                    : null,
+          };
+        }).toList();
 
     try {
       for (var anggota in data) {
         var anggotaObj = AnggotaKeluarga(
-          kk_id: widget.kkId, 
+          kk_id: widget.kkId,
           nama: anggota['nama'],
           nik: anggota['nik'],
           tanggal_lahir: DateTime.parse(anggota['tanggal_lahir']),
           jenis_kelamin: anggota['jenis_kelamin'],
           statusDalamKeluarga: anggota['status_dalam_keluarga'],
+          hamil: anggota['hamil'],
+          hpht:
+              anggota['hpht'] != null ? DateTime.parse(anggota['hpht']) : null,
         );
         await AnggotaKeluargaService.addAnggotaKeluarga(anggotaObj);
       }
@@ -99,43 +130,46 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Semua data berhasil disimpan')),
       );
-      Navigator.pop(context); // Kembali ke halaman sebelumnya
+      Navigator.of(context).popUntil((route)=> route.isFirst); // Kembali ke homescreen
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menyimpan data: $e')));
     }
   }
 
   Future<bool> _handleBackPressed() async {
     final shouldExit = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Konfirmasi'),
-        content: const Text('Apakah kamu yakin ingin keluar? Data yang belum disimpan akan hilang.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Tidak'),
+      builder:
+          (context) => AlertDialog(
+            title: const Text('Konfirmasi'),
+            content: const Text(
+              'Apakah kamu yakin ingin keluar? Data yang belum disimpan akan hilang.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Tidak'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Ya'),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Ya'),
-          ),
-        ],
-      ),
     );
 
     if (shouldExit == true) {
       try {
         await KartuKeluargaService.deleteKK(widget.kkId);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data KK dibatalkan')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Data KK dibatalkan')));
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menghapus KK: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal menghapus KK: $e')));
       }
       return true;
     }
@@ -166,9 +200,17 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
                   Text('NIK: ${ctrl['nik']!.text}'),
                   Text('Tanggal Lahir: ${ctrl['tanggal_lahir']!.text}'),
                   Text(
-                    'Jenis Kelamin: ${ctrl['jenis_kelamin'] == 'L' ? 'Laki-laki' : ctrl['jenis_kelamin'] == 'P' ? 'Perempuan' : '-'}',
+                    'Jenis Kelamin: ${ctrl['jenis_kelamin'] == 'L'
+                        ? 'Laki-laki'
+                        : ctrl['jenis_kelamin'] == 'P'
+                        ? 'Perempuan'
+                        : '-'}',
                   ),
                   Text('Status: ${ctrl['status_dalam_keluarga'] ?? "-"}'),
+                  if (ctrl['status_dalam_keluarga'] == 'Istri')
+                    Text('Hamil: ${ctrl['hamil'] ?? "-"}'),
+                  if (ctrl['hamil'] == 'Ya')
+                    Text('HPHT: ${ctrl['hpht']!.text}'),
                 ],
               ),
             ),
@@ -208,13 +250,16 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
             TextFormField(
               controller: ctrl['nama'],
               decoration: const InputDecoration(labelText: 'Nama Lengkap'),
-              validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+              validator:
+                  (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
             ),
             TextFormField(
               controller: ctrl['nik'],
               decoration: const InputDecoration(labelText: 'NIK'),
               keyboardType: TextInputType.number,
-              validator: (val) => val == null || val.length != 16 ? 'Harus 16 digit' : null,
+              validator:
+                  (val) =>
+                      val == null || val.length != 16 ? 'Harus 16 digit' : null,
             ),
             TextFormField(
               controller: ctrl['tanggal_lahir'],
@@ -224,34 +269,78 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
                 suffixIcon: Icon(Icons.calendar_today),
               ),
               onTap: () => _selectTanggal(currentIndex),
-              validator: (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
+              validator:
+                  (val) => val == null || val.isEmpty ? 'Wajib diisi' : null,
             ),
             DropdownButtonFormField<String>(
               decoration: const InputDecoration(labelText: 'Jenis Kelamin'),
               value: ctrl['jenis_kelamin'],
-              items: ['L', 'P'].map((jk) {
-                return DropdownMenuItem(
-                  value: jk,
-                  child: Text(jk == 'L' ? 'Laki-laki' : 'Perempuan'),
-                );
-              }).toList(),
+              items:
+                  ['L', 'P'].map((jk) {
+                    return DropdownMenuItem(
+                      value: jk,
+                      child: Text(jk == 'L' ? 'Laki-laki' : 'Perempuan'),
+                    );
+                  }).toList(),
               onChanged: (val) => setState(() => ctrl['jenis_kelamin'] = val),
               validator: (val) => val == null ? 'Pilih jenis kelamin' : null,
             ),
             DropdownButtonFormField<String>(
-              decoration: const InputDecoration(labelText: 'Status dalam Keluarga'),
+              decoration: const InputDecoration(
+                labelText: 'Status dalam Keluarga',
+              ),
               value: ctrl['status_dalam_keluarga'],
-              items: ['Kepala Keluarga', 'Istri', 'Anak', 'Lainnya'].map((status) {
-                return DropdownMenuItem(value: status, child: Text(status));
-              }).toList(),
-              onChanged: (val) => setState(() => ctrl['status_dalam_keluarga'] = val),
+              items:
+                  ['Kepala Keluarga', 'Istri', 'Anak', 'Lainnya'].map((status) {
+                    return DropdownMenuItem(value: status, child: Text(status));
+                  }).toList(),
+              onChanged:
+                  (val) => setState(() => ctrl['status_dalam_keluarga'] = val),
               validator: (val) => val == null ? 'Pilih status' : null,
             ),
+            if (ctrl['status_dalam_keluarga'] == 'Istri') ...[
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(labelText: 'Sedang Hamil?'),
+                value: ctrl['hamil'],
+                items:
+                    ['Ya', 'Tidak'].map((val) {
+                      return DropdownMenuItem(value: val, child: Text(val));
+                    }).toList(),
+                onChanged: (val) {
+                  setState(() {
+                    ctrl['hamil'] = val;
+                    if (val == 'Tidak') {
+                      ctrl['hpht']?.text = '';
+                    }
+                  });
+                },
+                validator: (val) => val == null ? 'Pilih salah satu' : null,
+              ),
+              if (ctrl['hamil'] == 'Ya')
+                TextFormField(
+                  controller: ctrl['hpht'],
+                  readOnly: true,
+                  decoration: const InputDecoration(
+                    labelText: 'HPHT',
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  onTap: () => _selectHPHT(currentIndex),
+                  validator: (val) {
+                    if (ctrl['hamil'] == 'Ya' && (val == null || val.isEmpty)) {
+                      return 'HPHT wajib diisi!';
+                    }
+                    return null;
+
+                  },
+                ),
+            ],
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: _nextOrSubmit,
               child: Text(
-                currentIndex < widget.jumlah - 1 ? 'Selanjutnya' : 'Review Data',
+                currentIndex < widget.jumlah - 1
+                    ? 'Selanjutnya'
+                    : 'Review Data',
               ),
             ),
           ],
@@ -263,7 +352,7 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: true,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop) {
           final shouldPop = await _handleBackPressed();

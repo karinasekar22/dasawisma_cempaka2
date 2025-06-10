@@ -4,8 +4,10 @@ import 'add_anggota_form.dart';
 import 'package:posyandu_cempaka2/services/kartu_keluarga_service.dart';
 
 class AddKKForm extends StatefulWidget {
+
   @override
   _AddKKFormState createState() => _AddKKFormState();
+
 }
 
 class _AddKKFormState extends State<AddKKForm> {
@@ -31,7 +33,6 @@ class _AddKKFormState extends State<AddKKForm> {
   void _submitKK() async {
     if (_formKey.currentState!.validate()) {
       final newKK = KartuKeluarga(
-      
       nomorKK: _nomorKKController.text,
       alamat: _alamatController.text,
       rt: _rtController.text,

@@ -6,6 +6,9 @@ class AnggotaKeluarga {
   final DateTime tanggal_lahir;
   final String jenis_kelamin;
   final String? kategori;
+  final bool? hamil;
+  final DateTime? hpht;
+  final int? usiaKandungan;
   final String statusDalamKeluarga;
 
   AnggotaKeluarga({
@@ -16,6 +19,9 @@ class AnggotaKeluarga {
     required this.tanggal_lahir,
     required this.jenis_kelamin,
     this.kategori,
+    this.hamil,
+    this.hpht,
+    this.usiaKandungan,
     required this.statusDalamKeluarga,
   });
 
@@ -26,24 +32,31 @@ class AnggotaKeluarga {
       nama: json['nama'],
       nik: json['nik'],
       tanggal_lahir: DateTime.parse(json['tanggal_lahir'] as String),
-      jenis_kelamin: json['jenis_kelamin']  == 'P' ? 'Perempuan' : 'Laki-laki',
+      jenis_kelamin: json['jenis_kelamin'] == 'P' ? 'Perempuan' : 'Laki-laki',
       kategori: json['kategori'],
+      hamil: json['hamil'],
+      hpht: json['hpht'] != null ? DateTime.parse(json['hpht'] as String) : null,
+      usiaKandungan:
+          json['usia_kandungan'] != null
+              ? int.tryParse(json['usia_kandungan'].toString())
+              : null,
       statusDalamKeluarga: json['status_dalam_keluarga'],
     );
   }
 
   Map<String, dynamic> toJson() {
-  return {
-    'kk_id': kk_id,
-    'nama': nama,
-    'nik': nik,
-    'tanggal_lahir': tanggal_lahir.toIso8601String(),
-    'jenis_kelamin': jenis_kelamin,
-    'kategori': kategori,
-    'status_dalam_keluarga': statusDalamKeluarga,
-  };
-}
-
+    return {
+      'kk_id': kk_id,
+      'nama': nama,
+      'nik': nik,
+      'tanggal_lahir': tanggal_lahir.toIso8601String(),
+      'jenis_kelamin': jenis_kelamin,
+      'kategori': kategori,
+      'status_dalam_keluarga': statusDalamKeluarga,
+      'hamil': hamil,
+      'hpht': hamil == true && hpht != null ? hpht!.toIso8601String() : null,
+    };
+  }
 }
 
 class KartuKeluarga {
@@ -66,9 +79,10 @@ class KartuKeluarga {
   });
 
   factory KartuKeluarga.fromJson(Map<String, dynamic> json) {
-    var anggotaList = (json['anggota'] as List)
-        .map((a) => AnggotaKeluarga.fromJson(a))
-        .toList();
+    var anggotaList =
+        (json['anggota'] as List)
+            .map((a) => AnggotaKeluarga.fromJson(a))
+            .toList();
 
     return KartuKeluarga(
       id: json['id'],
@@ -92,9 +106,12 @@ class KartuKeluarga {
   }
 
   AnggotaKeluarga? get kepalaKeluarga {
-    return anggota.firstWhere(
-      (a) => a.statusDalamKeluarga.toLowerCase() == "kepala keluarga",
-      orElse: () => anggota[0],
-    );
+    try {
+      return anggota.firstWhere(
+        (a) => a.statusDalamKeluarga.toLowerCase() == "kepala keluarga",
+      );
+    } catch (e) {
+      return null;
+    }
   }
 }
