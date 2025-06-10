@@ -85,14 +85,18 @@ async function getKategoriOtomatis(anggota) {
 
     if (anggota.hamil && usiaKandungan > 0) return "Ibu Hamil";
     if (totalUmurBulan <= 60) return "Balita";
-    if (umurTahun >= 50 && umurTahun <= 59) return "Pra Lansia";
-    if (umurTahun >= 60) return "Lansia";
     if (
       umurTahun >= 15 &&
       umurTahun <= 49 &&
       ["istri", "kepala keluarga"].includes(status)
     )
       return "Pasangan Usia Subur";
+    if (umurTahun >= 50 && umurTahun <= 59) return "Pra Lansia";
+    if (umurTahun >= 60) return "Lansia";
+    
+    if (umurTahun >= 6 && umurTahun <= 17) return "Remaja";
+
+     if (umurTahun >= 18 && umurTahun < 50) return "Dewasa";
 
     return "";
   } catch (error) {

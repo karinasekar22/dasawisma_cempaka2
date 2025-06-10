@@ -52,7 +52,7 @@ const AnggotaKeluarga = sequelize.define(
       defaultValue: false,
     },
     hpht: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
     usia_kandungan: {

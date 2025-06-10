@@ -15,8 +15,8 @@ int hitungUmur(DateTime tanggalLahir) {
 }
 
 class DetailKKPage extends StatelessWidget {
-  final KartuKeluarga kk;
 
+  final KartuKeluarga kk;
   const DetailKKPage({super.key, required this.kk});
 
   @override

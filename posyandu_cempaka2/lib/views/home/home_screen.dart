@@ -91,7 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 20),
 
-              // ROW Filter + Search
               Row(
                 children: [
                   ElevatedButton.icon(
@@ -129,7 +128,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 16),
 
-              // LIST KK
               isLoading
                   ? const CircularProgressIndicator()
                   : Expanded(
@@ -165,7 +163,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // NOMOR URUT
                                   Text(
                                     "${index + 1}.",
                                     style: const TextStyle(
@@ -175,7 +172,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(width: 12),
 
-                                  // BAGIAN UTAMA: Info KK + tombol
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -294,7 +290,9 @@ class _HomeScreenState extends State<HomeScreen> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.grid_view), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view), 
+            label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.pregnant_woman),
             label: 'Bumil',
