@@ -42,7 +42,7 @@ exports.updateKartuKeluarga = async (req, res) => {
     if (!data) return res.status(404).json({ message: 'Data tidak ditemukan' });
 
     await data.update(req.body);
-    res.json(data);
+    res.status(201).json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

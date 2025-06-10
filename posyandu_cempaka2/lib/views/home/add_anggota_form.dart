@@ -7,8 +7,14 @@ import 'package:posyandu_cempaka2/services/kartu_keluarga_service.dart';
 class AddAnggotaForm extends StatefulWidget {
   final String kkId;
   final int jumlah;
+  final List<AnggotaKeluarga>? existingAnggota;
 
-  const AddAnggotaForm({required this.kkId, required this.jumlah, super.key});
+  const AddAnggotaForm({
+    Key? key,
+    required this.kkId,
+    required this.jumlah,
+    this.existingAnggota,
+  }) : super(key: key);
 
   @override
   _AddAnggotaFormState createState() => _AddAnggotaFormState();
@@ -25,15 +31,40 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
   void initState() {
     super.initState();
     anggotaControllers = List.generate(widget.jumlah, (index) {
-      return {
-        'nama': TextEditingController(),
-        'nik': TextEditingController(),
-        'tanggal_lahir': TextEditingController(),
-        'jenis_kelamin': null,
-        'status_dalam_keluarga': null,
-        'hamil': null,
-        'hpht': TextEditingController(),
-      };
+      if (index < (widget.existingAnggota?.length ?? 0)) {
+        //Editing
+        var existing = widget.existingAnggota![index];
+        return {
+          'id': existing.id,
+          'nama': TextEditingController(text: existing.nama),
+          'nik': TextEditingController(text: existing.nik),
+          'tanggal_lahir': TextEditingController(
+            text: DateFormat('yyyy-MM-dd').format(existing.tanggal_lahir),
+          ),
+          'jenis_kelamin': existing.jenis_kelamin == 'Perempuan' ? 'P' : 'L',
+          'status_dalam_keluarga': existing.statusDalamKeluarga,
+          'hamil': existing.hamil == true ? 'Ya' : 'Tidak',
+          'hpht': TextEditingController(
+            text:
+                existing.hpht != null
+                    ? DateFormat('yyyy-MM-dd').format(existing.hpht!)
+                    : '',
+          ),
+          'isExisting': true,
+        };
+      } else {
+        // Add data baru
+        return {
+          'nama': TextEditingController(),
+          'nik': TextEditingController(),
+          'tanggal_lahir': TextEditingController(),
+          'jenis_kelamin': null,
+          'status_dalam_keluarga': null,
+          'hamil': null,
+          'hpht': TextEditingController(),
+          'isExisting': false,
+        };
+      }
     });
   }
 
@@ -79,7 +110,7 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
   }
 
   void _nextOrSubmit() {
-     print('Validasi form dijalankan. currentIndex: $currentIndex');
+    print('Validasi form dijalankan. currentIndex: $currentIndex');
     if (_formKey.currentState!.validate()) {
       if (currentIndex < widget.jumlah - 1) {
         setState(() {
@@ -97,6 +128,7 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
     final data =
         anggotaControllers.map((ctrl) {
           return {
+            'id': ctrl['id'],
             'kk_id': widget.kkId,
             'nama': ctrl['nama']!.text,
             'nik': ctrl['nik']!.text,
@@ -108,29 +140,39 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
                 ctrl['hpht'] != null && ctrl['hpht']!.text.isNotEmpty
                     ? DateTime.tryParse(ctrl['hpht']!.text)?.toIso8601String()
                     : null,
+            'isExisting': ctrl['isExisting'],
           };
         }).toList();
 
     try {
-      for (var anggota in data) {
-        var anggotaObj = AnggotaKeluarga(
+      for (var anggotaData in data) {
+        var anggota = AnggotaKeluarga(
+          id: anggotaData['id'],
           kk_id: widget.kkId,
-          nama: anggota['nama'],
-          nik: anggota['nik'],
-          tanggal_lahir: DateTime.parse(anggota['tanggal_lahir']),
-          jenis_kelamin: anggota['jenis_kelamin'],
-          statusDalamKeluarga: anggota['status_dalam_keluarga'],
-          hamil: anggota['hamil'],
+          nama: anggotaData['nama'],
+          nik: anggotaData['nik'],
+          tanggal_lahir: DateTime.parse(anggotaData['tanggal_lahir']),
+          jenis_kelamin: anggotaData['jenis_kelamin'],
+          statusDalamKeluarga: anggotaData['status_dalam_keluarga'],
+          hamil: anggotaData['hamil'],
           hpht:
-              anggota['hpht'] != null ? DateTime.parse(anggota['hpht']) : null,
+              anggotaData['hpht'] != null
+                  ? DateTime.parse(anggotaData['hpht'])
+                  : null,
         );
-        await AnggotaKeluargaService.addAnggotaKeluarga(anggotaObj);
+        if (anggotaData['isExisting'] == true) {
+          await AnggotaKeluargaService.updateAnggotaKeluarga(anggota);
+        } else {
+          await AnggotaKeluargaService.addAnggotaKeluarga(anggota);
+        }
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Semua data berhasil disimpan')),
       );
-      Navigator.of(context).popUntil((route)=> route.isFirst); // Kembali ke homescreen
+      Navigator.of(
+        context,
+      ).popUntil((route) => route.isFirst); // Kembali ke homescreen
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -159,21 +201,7 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
             ],
           ),
     );
-
-    if (shouldExit == true) {
-      try {
-        await KartuKeluargaService.deleteKK(widget.kkId);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Data KK dibatalkan')));
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Gagal menghapus KK: $e')));
-      }
-      return true;
-    }
-    return false;
+    return shouldExit ?? false;
   }
 
   Widget _buildReviewScreen() {
@@ -330,7 +358,6 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
                       return 'HPHT wajib diisi!';
                     }
                     return null;
-
                   },
                 ),
             ],
@@ -355,8 +382,8 @@ class _AddAnggotaFormState extends State<AddAnggotaForm> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (!didPop) {
-          final shouldPop = await _handleBackPressed();
-          if (shouldPop) Navigator.of(context).pop();
+          final shouldExit = await _handleBackPressed();
+          if (shouldExit) Navigator.of(context).pop(false);
         }
       },
       child: showReview ? _buildReviewScreen() : _buildFormScreen(),

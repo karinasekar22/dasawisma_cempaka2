@@ -170,7 +170,7 @@ exports.updateAnggota = async (req, res) => {
 
     const refreshedData = await AnggotaKeluarga.findByPk(data.id);
 
-    res.json(refreshedData);
+    res.status(200).json(refreshedData);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

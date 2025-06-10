@@ -18,4 +18,19 @@ class AnggotaKeluargaService {
       throw Exception("Gagal menambahkan anggota keluarga: ${response.body}");
     }
   }
+
+    static Future<void> updateAnggotaKeluarga(AnggotaKeluarga anggota) async {
+    final url = Uri.parse('$baseUrl/anggota-keluarga/${anggota.id}');
+    final response = await http.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(anggota.toJson()),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update anggota keluarga: ${response.body}');
+    }
+  }
+
+
 }

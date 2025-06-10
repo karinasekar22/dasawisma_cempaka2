@@ -34,11 +34,40 @@ class KartuKeluargaService {
   static Future<void> deleteKK(String kkId) async {
     final response = await http.delete(
       Uri.parse("$baseUrl/kartu-keluarga/$kkId"),
-       headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': 'application/json'},
     );
 
     if (response.statusCode != 200) {
       throw Exception("Gagal hapus KK: ${response.body}");
+    }
+  }
+
+  static Future<String> updateKartuKeluarga(
+    String kkId,
+    KartuKeluarga kk,
+  ) async {
+    final response = await http.put(
+      Uri.parse("$baseUrl/kartu-keluarga/$kkId"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(kk.toJson()),
+    );
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['id'];
+    } else {
+      throw Exception("Gagal update data kartu keluarga");
+    }
+  }
+
+    static Future<KartuKeluarga> fetchKartuKeluargaById(String kkId) async {
+    final response = await http.get(Uri.parse("$baseUrl/kartu-keluarga/$kkId"));
+
+    if (response.statusCode == 200) {
+       final dynamic json = jsonDecode(response.body);
+      return KartuKeluarga.fromJson(json);
+    } else {
+      throw Exception("Gagal memuat data kartu keluarga by id");
     }
   }
 
